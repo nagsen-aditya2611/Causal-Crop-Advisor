@@ -1,106 +1,98 @@
 # 🌾 Causal Crop Advisor
 
-A Streamlit-based decision support system that helps farmers identify the agricultural factors that truly influence crop yield using **Causal Inference** and **Machine Learning**.
+Helping farmers focus on the agricultural factors that **truly influence crop yield** using **Causal Inference** and **Machine Learning**.
+
+## 🚀 Live Application
+
+👉 **Launch the App:**  
+**https://causal-crop-advisor.streamlit.app/**
 
 ---
 
-## 📌 Overview
+## Overview
 
-Traditional crop prediction systems often rely only on correlations between variables and yield.
+Traditional crop yield prediction systems often rely on every available variable, even when many are only correlated with crop yield.
 
-This application adopts a **causal inference approach**, identifying the variables that have a genuine causal influence on crop yield before using machine learning models for prediction.
+This project adopts a **causal inference approach** to identify the variables that have a genuine causal influence on crop production before using machine learning models for prediction.
 
-The goal is to provide:
+The application provides:
 
-- Better interpretability
-- Actionable recommendations
-- Simpler decision making
-- Reliable yield estimation
-
----
-
-## ✨ Features
-
-- 🌾 Crop Yield Prediction
 - 📊 Causal Impact Dashboard
-- 🧠 Yield Explanation
-- 👨‍🌾 Farmer Recommendations
-- 📄 Downloadable Farmer Report
-- ⚡ Interactive Streamlit Interface
+- 🌾 Crop Yield Prediction
+- 🧠 Explanation of the prediction
+- 👨‍🌾 Actionable farmer recommendations
+- 📄 Downloadable farmer report
 
 ---
 
-## 🔬 Methodology
+## Workflow
 
-The workflow followed in this application is:
-
-```
-Field Inputs
-      │
-      ▼
+```text
+Field Information
+        │
+        ▼
 Causal Variable Analysis
-      │
-      ▼
+        │
+        ▼
 Machine Learning Prediction
-      │
-      ▼
+        │
+        ▼
 Yield Explanation
-      │
-      ▼
+        │
+        ▼
 Farmer Recommendations
 ```
 
-Instead of relying on all available variables, the prediction is based on a **causally selected subset of agricultural features**.
+---
+
+## Causally Important Variables
+
+The deployed model focuses on the following causally selected variables:
+
+- 💧 Average Soil Moisture
+- 🌡 Average Temperature
+- ☀ Solar Radiation
+- 🌦 Climatic Water Balance
+- 🌿 NDVI
+- 🌱 FPAR
+- 🌍 Available Water Capacity
+- 🪨 Bulk Density
+- 🚜 Drainage Class
+
+These variables were identified through causal discovery and treatment effect estimation before model development.
 
 ---
 
-## 🌱 Causally Important Variables
+## Machine Learning Models
 
-The deployed model focuses on the following variables:
-
-- Average Soil Moisture
-- Average Temperature
-- Solar Radiation
-- Climatic Water Balance
-- NDVI
-- FPAR
-- Available Water Capacity
-- Bulk Density
-- Drainage Class
-
-These variables were identified through causal analysis before model development.
-
----
-
-## 🤖 Models Used
-
-Three machine learning models are included:
+The application compares predictions from:
 
 - Random Forest
 - XGBoost
 - LightGBM
 
-The application compares predictions from these models and reports the final estimated crop yield.
+The final recommendation is generated using the best-performing causal model.
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 - Python
 - Streamlit
-- Scikit-Learn
+- Scikit-learn
 - XGBoost
 - LightGBM
 - Pandas
 - NumPy
+- Joblib
 - ReportLab
 
 ---
 
-## 📂 Project Structure
+## Repository Structure
 
-```
-Causal-Crop-Advisor
+```text
+Causal-Crop-Advisor/
 │
 ├── app.py
 ├── assets/
@@ -112,7 +104,7 @@ Causal-Crop-Advisor
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 Clone the repository
 
@@ -134,35 +126,25 @@ streamlit run app.py
 
 ---
 
-## 📷 Application
+## Related Research
 
-The application allows farmers to:
+This application accompanies the research project:
 
-- Enter field conditions
-- View causally important factors
-- Estimate crop yield
-- Receive field-specific recommendations
-- Generate a farmer report
+**Crop Yield Forecasting using Causal Inference**
 
----
-
-## 📚 Related Research
-
-The complete research implementation, including:
+which includes:
 
 - Exploratory Data Analysis
+- Expert DAG Construction
 - Causal Discovery
 - Treatment Effect Estimation
-- Feature Selection
-- Model Development
-
-is available in the companion repository:
-
-**Causal-Crop-Yield-Forecasting**
+- Causal Feature Selection
+- Machine Learning Model Comparison
+- Explainable AI
 
 ---
 
-## 👨‍💻 Developer
+## Developer
 
 **Aditya Nagsen**
 
@@ -172,6 +154,6 @@ Symbiosis Statistical Institute, Pune
 
 ---
 
-## 📄 License
+## License
 
 This project is intended for academic and educational purposes.
