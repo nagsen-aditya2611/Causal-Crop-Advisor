@@ -18,9 +18,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-rf_model = joblib.load("models/rf_causal.pkl")
-xgb_model = joblib.load("models/xgb_causal.pkl")
-lgb_model = joblib.load("models/lgb_causal.pkl")
+rf_model = joblib.load("data/models/rf_causal.pkl")
+xgb_model = joblib.load("data/models/xgb_causal.pkl")
+lgb_model = joblib.load("data/models/lgb_causal.pkl")
 
 # --------------------------------------------------
 # Hide Streamlit default menu & sidebar
