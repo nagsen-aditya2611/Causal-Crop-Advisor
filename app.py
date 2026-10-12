@@ -49,25 +49,20 @@ FEATURE_COLUMNS = [
 ]
 
 # --------------------------------------------------
-# Helper Function for Safe Prediction
+# Helper Function for Safe Prediction (Prevents Crashes)
 # --------------------------------------------------
 def safe_predict(model, df_input, raw_array):
     """
-    Attempts to predict using DataFrame. If column names mismatch,
-    falls back to raw NumPy array to prevent crashing.
+    Attempts to predict using DataFrame. If column names mismatch what 
+    the model expects, falls back to raw NumPy array to prevent crashing.
     """
     try:
-        # Check if model has specific feature names saved
         if hasattr(model, "feature_names_in_"):
             expected_names = list(model.feature_names_in_)
-            # If expected names match our columns (regardless of order), reorder
             if set(expected_names).issubset(set(df_input.columns)):
                 return float(model.predict(df_input[expected_names])[0])
-        
-        # Try direct dataframe prediction
         return float(model.predict(df_input)[0])
     except Exception:
-        # Fallback to numpy array (ignores feature names)
         return float(model.predict(raw_array)[0])
 
 # --------------------------------------------------
@@ -145,6 +140,14 @@ with st.spinner("🔍 Running causal model predictions..."):
 
 predicted_yield = xgb_pred
 
+# Calculate Yield Category
+if predicted_yield >= 5.5:
+    category = "🟢 High Yield Potential"
+elif predicted_yield >= 4.0:
+    category = "🟡 Moderate Yield Potential"
+else:
+    category = "🔴 Low Yield Potential"
+
 # --------------------------------------------------
 # Causal Impact Dashboard
 # --------------------------------------------------
@@ -203,13 +206,6 @@ with col2:
 with col3:
     st.metric("💡 LightGBM", f"{lgb_pred:.2f} t/ha")
 
-if predicted_yield >= 5.5:
-    category = "🟢 High Yield Potential"
-elif predicted_yield >= 4.0:
-    category = "🟡 Moderate Yield Potential"
-else:
-    category = "🔴 Low Yield Potential"
-
 st.success(f"## Final Recommendation\n\n### Expected Yield\n# 🌾 {predicted_yield:.2f} tonnes/hectare\n\n**Field Status:** {category}")
 
 # --------------------------------------------------
@@ -248,54 +244,80 @@ Machine learning models predict yield strictly from these causally selected feat
 """)
 
 # --------------------------------------------------
-# PDF Report Generator
+# Enhanced PDF Report Generator
 # --------------------------------------------------
 st.divider()
 st.header("📄 Download Farmer Report")
 
-buffer = io.BytesIO()
-doc = SimpleDocTemplate(buffer, title="Causal Crop Advisor Report")
-styles = getSampleStyleSheet()
-story = []
+def generate_pdf():
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, title="Causal Crop Advisor Report")
+    styles = getSampleStyleSheet()
+    story = []
 
-story.append(Paragraph("<b>CAUSAL CROP ADVISOR REPORT</b>", styles["Title"]))
-story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
-story.append(Spacer(1, 0.2 * inch))
+    # 1. Header & Title
+    story.append(Paragraph("<b>CAUSAL CROP ADVISOR REPORT</b>", styles["Title"]))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
+    story.append(Spacer(1, 0.15 * inch))
 
-story.append(Paragraph("<b>Field Summary</b>", styles["Heading2"]))
-story.append(Paragraph(f"Crop: {crop} | Year: {harvest_year} | Area: {harvest_area} ha", styles["BodyText"]))
-story.append(Spacer(1, 0.1 * inch))
+    # 2. Field Summary
+    story.append(Paragraph("<b>Field Summary</b>", styles["Heading2"]))
+    story.append(Paragraph(f"Crop: <b>{crop}</b> | Year: <b>{harvest_year}</b> | Area: <b>{harvest_area} ha</b>", styles["BodyText"]))
+    story.append(Spacer(1, 0.15 * inch))
 
-story.append(Paragraph("<b>Yield Predictions</b>", styles["Heading2"]))
-pred_table = [
-    ["Model", "Yield (t/ha)"],
-    ["Random Forest", f"{rf_pred:.2f}"],
-    ["XGBoost (Selected Best)", f"{xgb_pred:.2f}"],
-    ["LightGBM", f"{lgb_pred:.2f}"],
-]
-t = Table(pred_table, colWidths=[2.5 * inch, 2.5 * inch])
-t.setStyle(TableStyle([
-    ("BACKGROUND", (0, 0), (-1, 0), colors.darkgreen),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-]))
-story.append(t)
-story.append(Spacer(1, 0.2 * inch))
+    # 3. Input Parameters Table
+    story.append(Paragraph("<b>Analyzed Field Parameters</b>", styles["Heading2"]))
+    input_table_data = [
+        ["Parameter", "Input Value", "Parameter", "Input Value"],
+        ["Soil Moisture", f"{avg_ssm:.2f}", "NDVI", f"{avg_ndvi:.2f}"],
+        ["Temperature (°C)", f"{avg_tavg:.1f}", "FPAR", f"{avg_fpar:.2f}"],
+        ["Solar Rad. (MJ/m²)", f"{avg_rad:.1f}", "Water Capacity (AWC)", f"{awc:.2f}"],
+        ["Water Balance (mm)", f"{avg_cwb:.1f}", "Bulk Density (g/cm³)", f"{bulk_density:.2f}"],
+        ["Drainage Class", f"{drainage}", "", ""]
+    ]
+    t_input = Table(input_table_data, colWidths=[1.8 * inch, 1.0 * inch, 1.8 * inch, 1.0 * inch])
+    t_input.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+    ]))
+    story.append(t_input)
+    story.append(Spacer(1, 0.15 * inch))
 
-story.append(Paragraph("<b>Recommended Actions</b>", styles["Heading2"]))
-if not recommendations:
-    story.append(Paragraph("Field conditions are favourable. Continue normal management.", styles["BodyText"]))
-else:
-    for rec in recommendations:
-        story.append(Paragraph("• " + rec, styles["BodyText"]))
+    # 4. Yield Predictions Table
+    story.append(Paragraph("<b>Yield Predictions & Status</b>", styles["Heading2"]))
+    pred_table = [
+        ["Model", "Yield (t/ha)"],
+        ["Random Forest", f"{rf_pred:.2f}"],
+        ["XGBoost (Selected Best)", f"{xgb_pred:.2f}"],
+        ["LightGBM", f"{lgb_pred:.2f}"],
+    ]
+    t_pred = Table(pred_table, colWidths=[2.8 * inch, 2.8 * inch])
+    t_pred.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkgreen),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    story.append(t_pred)
+    story.append(Paragraph(f"<br/><b>Status Category:</b> {category}", styles["BodyText"]))
+    story.append(Spacer(1, 0.15 * inch))
 
-doc.build(story)
-pdf_bytes = buffer.getvalue()
-buffer.close()
+    # 5. Recommended Actions
+    story.append(Paragraph("<b>Recommended Actions</b>", styles["Heading2"]))
+    if not recommendations:
+        story.append(Paragraph("Field environmental conditions meet standard baseline targets. Continue regular irrigation, nutrient, and crop monitoring.", styles["BodyText"]))
+    else:
+        for rec in recommendations:
+            story.append(Paragraph("• " + rec, styles["BodyText"]))
+
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
 
 st.download_button(
     "⬇ Download PDF Report",
-    pdf_bytes,
+    generate_pdf(),
     file_name=f"Farmer_Report_{harvest_year}.pdf",
     mime="application/pdf"
 )
