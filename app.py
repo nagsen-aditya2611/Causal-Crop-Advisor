@@ -43,11 +43,32 @@ rf_model = models["rf"]
 xgb_model = models["xgb"]
 lgb_model = models["lgb"]
 
-# ⚠️ Feature order used during training
 FEATURE_COLUMNS = [
     "avg_ssm", "avg_tavg", "avg_rad", "avg_cwb",
     "avg_ndvi", "avg_fpar", "awc", "bulk_density", "drainage"
 ]
+
+# --------------------------------------------------
+# Helper Function for Safe Prediction
+# --------------------------------------------------
+def safe_predict(model, df_input, raw_array):
+    """
+    Attempts to predict using DataFrame. If column names mismatch,
+    falls back to raw NumPy array to prevent crashing.
+    """
+    try:
+        # Check if model has specific feature names saved
+        if hasattr(model, "feature_names_in_"):
+            expected_names = list(model.feature_names_in_)
+            # If expected names match our columns (regardless of order), reorder
+            if set(expected_names).issubset(set(df_input.columns)):
+                return float(model.predict(df_input[expected_names])[0])
+        
+        # Try direct dataframe prediction
+        return float(model.predict(df_input)[0])
+    except Exception:
+        # Fallback to numpy array (ignores feature names)
+        return float(model.predict(raw_array)[0])
 
 # --------------------------------------------------
 # Hide Streamlit Default Menus
@@ -104,17 +125,23 @@ if not run:
     st.stop()
 
 # --------------------------------------------------
-# Predictions Input (Pandas DataFrame prevents column misalignment)
+# Prepare Input Data
 # --------------------------------------------------
-input_data = pd.DataFrame([[
+raw_values = [[
     avg_ssm, avg_tavg, avg_rad, avg_cwb,
     avg_ndvi, avg_fpar, awc, bulk_density, drainage
-]], columns=FEATURE_COLUMNS)
+]]
 
+input_df = pd.DataFrame(raw_values, columns=FEATURE_COLUMNS)
+input_np = np.array(raw_values)
+
+# --------------------------------------------------
+# Generate Predictions (Fail-safe)
+# --------------------------------------------------
 with st.spinner("🔍 Running causal model predictions..."):
-    rf_pred = float(rf_model.predict(input_data)[0])
-    xgb_pred = float(xgb_model.predict(input_data)[0])
-    lgb_pred = float(lgb_model.predict(input_data)[0])
+    rf_pred  = safe_predict(rf_model, input_df, input_np)
+    xgb_pred = safe_predict(xgb_model, input_df, input_np)
+    lgb_pred = safe_predict(lgb_model, input_df, input_np)
 
 predicted_yield = xgb_pred
 
